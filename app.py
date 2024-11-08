@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import subprocess
 import os
 import sys
@@ -71,13 +73,17 @@ tools = [
     {'number': '58', 'name': 'VirusTotal Scan', 'script': 'virustotal_scan.py', 'section': 'Security & Threat Intelligence'},
 ]
 
+# Set up the rate limiter with a global limit
+limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"])
+
 # Home route
 @app.route('/')
 def index():
     return render_template('/index.html', tools=tools)
 
-# Run selected tool
+# Run selected tool with rate limiting
 @app.route('/run_tool', methods=['POST'])
+@limiter.limit("10 per minute")  # Limit: 10 requests per minute per IP
 def run_tool():
     tool_number = request.form['tool']
     domain = request.form['domain']
@@ -101,7 +107,14 @@ def run_tool():
     
     return render_template('result.html', output=output)
 
+# Error handling
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('error.html', error_message="Page not found. Please check the URL."), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('error.html', error_message="An unexpected error occurred on the server."), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
-
-

@@ -8,11 +8,9 @@ from rich.console import Console
 from rich.table import Table
 from colorama import Fore, init
 
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.util import clean_domain_input, validate_domain
 from config.settings import DEFAULT_TIMEOUT  
-
 
 init(autoreset=True)
 console = Console()
@@ -24,26 +22,36 @@ def banner():
     =============================================
     """)
 
-def check_dns_over_https(domain):
+def check_dns_over_https(domain, record_type):
     try:
-        api_url = f"https://dns.google/resolve?name={domain}&type=A"
+        api_url = f"https://dns.google/resolve?name={domain}&type={record_type}"
         response = requests.get(api_url, timeout=DEFAULT_TIMEOUT)
         if response.status_code == 200:
-            return "Supported"
-        return "Not Supported"
+            data = response.json()
+            if "Answer" in data:
+                return "Supported"
+            return "Not Supported"
+        else:
+            return f"Error: HTTP {response.status_code} - {response.reason}"
+    except requests.Timeout:
+        return "Error: Request timed out"
+    except requests.ConnectionError:
+        return "Error: Network connection issue"
     except requests.RequestException as e:
-        console.print(Fore.RED + f"[!] Error checking DNS over HTTPS: {e}")
-        return None
+        return f"Error: {str(e)}"
 
-def display_dns_over_https(status):
+def display_dns_over_https(results):
     table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Record Type", style="cyan", justify="left")
     table.add_column("DoH Status", style="cyan", justify="left")
-    table.add_row(status)
+    
+    for record_type, status in results.items():
+        table.add_row(record_type, status)
+    
     console.print(table)
 
 def main(target):
     banner()
-
     domain = clean_domain_input(target)
 
     if not validate_domain(domain):
@@ -51,12 +59,23 @@ def main(target):
         return
 
     console.print(Fore.WHITE + f"[*] Checking DNS over HTTPS support for: {domain}")
-    doh_status = check_dns_over_https(domain)
-    if doh_status:
-        display_dns_over_https(doh_status)
-    else:
-        console.print(Fore.RED + "[!] Could not retrieve DNS over HTTPS information.")
     
+    # List of all standard DNS record types
+    record_types = [
+        "A", "AAAA", "AFSDB", "APL", "CAA", "CDNSKEY", "CDS", "CERT", "CNAME", 
+        "CSYNC", "DHCID", "DLV", "DNAME", "DNSKEY", "DS", "EUI48", "EUI64", "HINFO", 
+        "HIP", "HTTPS", "IPSECKEY", "KEY", "KX", "LOC", "MX", "NAPTR", "NS", 
+        "NSEC", "NSEC3", "NSEC3PARAM", "OPENPGPKEY", "PTR", "RRSIG", "RP", "SIG", 
+        "SMIMEA", "SOA", "SRV", "SSHFP", "SVCB", "TA", "TKEY", "TLSA", "TSIG", 
+        "TXT", "URI"
+    ]
+    results = {}
+
+    for record_type in record_types:
+        doh_status = check_dns_over_https(domain, record_type)
+        results[record_type] = doh_status if doh_status else "Error"
+
+    display_dns_over_https(results)
     console.print(Fore.CYAN + "[*] DNS Over HTTPS check completed.")
 
 if __name__ == "__main__":

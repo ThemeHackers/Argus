@@ -102,6 +102,6 @@ def run_tool():
     return render_template('result.html', output=output)
 
 if __name__ == '__main__':
-    app.run(host='54.254.162.138', port=8000)
+    app.run(host='0.0.0.0', port=10000)
 
 

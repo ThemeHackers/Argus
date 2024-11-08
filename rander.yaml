@@ -1,0 +1,16 @@
+# Exported from Render on 2024-11-08T06:45:33Z
+services:
+- type: web
+  name: Argus
+  runtime: python
+  repo: https://github.com/ThemeHackers/Argus
+  plan: free
+  region: singapore
+  buildCommand: pip install -r requirements.txt
+  startCommand: .venv/bin/gunicorn -b 0.0.0.0:$PORT app:app
+  domains:
+  - argus-server.com
+  - www.argus-server.com
+  previews:
+    generation: automatic
+version: "1"

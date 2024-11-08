@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Argus - Web Application</title>
+    <title>Result</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
         /* Background gradient */
         body {
@@ -20,84 +20,49 @@
         /* Container styling */
         .container {
             background-color: #ffffff;
-            padding: 40px;
+            padding: 30px;
             border-radius: 10px;
             box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-            max-width: 500px;
+            max-width: 1300px;  /* Adjusted width for better output display */
             text-align: center;
-        }
-        /* Description text styling */
-        .description {
-            margin-bottom: 20px;
-            font-weight: 500;
-            color: #555;
         }
         h2 {
             color: #333;
             font-weight: 600;
             margin-bottom: 20px;
         }
-        /* Form field styling */
-        .form-control, .btn-primary {
+        /* Output area styling */
+        .output {
+            background-color: #f8f9fa;  /* Light background for the output */
+            border: 1px solid #dee2e6;  /* Border for better separation */
             border-radius: 8px;
+            box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;  /* Enables horizontal scrolling for long output */
+            max-height: 350px;  /* Limits the height of the output area */
         }
-        .form-control {
-            box-shadow: inset 0px 4px 8px rgba(0, 0, 0, 0.1);
+        pre {
+            margin: 0;  /* Removes default margins */
+            white-space: pre-wrap;  /* Ensures long lines wrap */
+            word-wrap: break-word;  /* Allows breaking long words */
         }
         /* Button styling */
-        .btn-primary {
-            background-color: #007bff;
-            border: none;
+        .btn-secondary {
             transition: all 0.3s ease;
-            box-shadow: 0px 4px 8px rgba(0, 123, 255, 0.4);
+            box-shadow: 0px 4px 8px rgba(108, 117, 125, 0.4);
         }
-        .btn-primary:hover {
-            background-color: #0056b3;
-            box-shadow: 0px 6px 12px rgba(0, 123, 255, 0.6);
-        }
-        /* Link styling */
-        .link {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .link:hover {
-            text-decoration: underline;
+        .btn-secondary:hover {
+            background-color: #6c757d;
+            box-shadow: 0px 6px 12px rgba(108, 117, 125, 0.6);
         }
     </style>
 </head>
 <body>
     <div class="container mt-5">
-        <p class="description">
-            <i class="fas fa-info-circle"></i> Argus Beta version - Web Application is the ultimate Information Gathering Toolkit Development Version By HackerTheme
-        </p>
-        <h2>
-            <i class="fas fa-search"></i> Argus - Web Application
-        </h2>
-        <form action="{{ url_for('run_tool') }}" method="POST">
-            <div class="form-group">
-                <label for="tool">
-                    <i class="fas fa-toolbox"></i> Select a tool
-                </label>
-                <select class="form-control" id="tool" name="tool" required>
-                    {% for tool in tools %}
-                        <option value="{{ tool.number }}">{{ tool.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="domain">
-                    <i class="fas fa-globe"></i> Enter IP Address URL or Domain
-                </label>
-                <input type="text" class="form-control" id="domain" name="domain" placeholder="Enter domain" required>
-            </div>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-play"></i> Run Tool
-            </button>
-            <p class="description mt-3">
-                <i class="fas fa-terminal"></i> If you want to use the CLI Version, You can go to <a href="https://github.com/ThemeHackers/argus/" class="link" target="_blank">This Link</a>.
-            </p>
-        </form>
+        <h2>Tool Output</h2>
+        <div class="output bg-light p-3 rounded">
+            <pre>{{ output }}</pre>
+        </div>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary mt-3">Back to Tool Selection</a>
     </div>
 </body>
 </html>

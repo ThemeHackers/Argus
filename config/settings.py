@@ -11,11 +11,11 @@ USER_AGENT = 'Mozilla/5.0 (compatible; ArgusBot/1.0; )'
 
 # API Keys for third-party services (add your own keys)
 API_KEYS = {
-    "VIRUSTOTAL_API_KEY": "",  # API key for VirusTotal
-    "SHODAN_API_KEY": "",         # API key for Shodan
-    "GOOGLE_API_KEY": "",     # API key for Google
-    "CENSYS_API_ID": "",           # API ID for Censys
-    "CENSYS_API_SECRET": "",    # API Secret for Censys
+    "VIRUSTOTAL_API_KEY": "25f612d52c1f3b34a71ca239f26bef311325e04f7ca8b36857bee05810b995e8",  # API key for VirusTotal
+    "SHODAN_API_KEY": "VmQnkUgcbyW8pV5C7UxA08ocY0T7yZG4",         # API key for Shodan
+    "GOOGLE_API_KEY": "AIzaSyCCWTVA-EN3F9lY-NXttU0u8fkjWk-pvtU",     # API key for Google
+    "CENSYS_API_ID": "3b1b9ff7-93ee-4264-8622-12529e65c828",           # API ID for Censys
+    "CENSYS_API_SECRET": "b9Dcm36ELOvOyQYCcDt5MqZZxMnmv1kl",    # API Secret for Censys
 
 }
 

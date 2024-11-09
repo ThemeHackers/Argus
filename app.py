@@ -7,6 +7,7 @@ import sys
 
 app = Flask(__name__)
 
+os.environ['PYDEVD_DISABLE_FILE_VALIDATION'] = '1'
 # Define tools with updated module numbers
 tools = [
     # Network & Infrastructure 

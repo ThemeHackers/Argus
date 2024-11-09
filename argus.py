@@ -1,13 +1,42 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for , get_flashed_messages
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import subprocess
 import os
 import sys
-
+from flask_socketio import SocketIO, emit
+import shlex
+import requests
 app = Flask(__name__)
+socketio = SocketIO(app)
+app.config['SECRET_KEY'] = os.urandom(24).hex()
 
-os.environ['PYDEVD_DISABLE_FILE_VALIDATION'] = '1'
+@app.route('/run_php_webshell', methods=['POST'])
+def run_php_webshell():
+    php_command = request.form['command']
+    url = f'http://localhost:5000/webshell.php?cmd={php_command}'
+    response = requests.get(url)
+    output = response.text
+    return render_template('result.html', output=output)
+
+# Home route for terminal shell
+@app.route('/terminal')
+def terminal():
+    return render_template('terminal.html')
+
+# WebSocket endpoint to handle terminal input
+@socketio.on('execute_command')
+def handle_command(data):
+    command = data.get('command')
+    if command:
+        try:
+            # Run shell command and capture output
+            process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = process.communicate()
+            output = stdout.decode() + stderr.decode()
+        except Exception as e:
+            output = f"Error: {str(e)}"
+        emit('command_output', {'output': output})
 # Define tools with updated module numbers
 tools = [
     # Network & Infrastructure 
@@ -112,10 +141,67 @@ def run_tool():
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('error.html', error_message="Page not found. Please check the URL."), 404
+settings = {
+    "RESULTS_DIR": "results",
+    "DEFAULT_TIMEOUT": 10,
+    "USER_AGENT": "Mozilla/5.0 (compatible; ArgusBot/1.0; )",
+    "API_KEYS": {
+        "VIRUSTOTAL_API_KEY": "",
+        "SHODAN_API_KEY": "",
+        "GOOGLE_API_KEY": "",
+        "CENSYS_API_ID": "",
+        "CENSYS_API_SECRET": ""
+    },
+    "EXPORT_SETTINGS": {
+        "enable_txt_export": True,
+        "enable_csv_export": False
+    },
+    "LOG_SETTINGS": {
+        "enable_logging": True,
+        "log_file": "argus.log",
+        "log_level": "INFO"
+    },
+    "HEADERS": {
+        "User-Agent": "Argus-Scanner/1.0",
+        "Accept-Language": "en-US,en;q=0.9"
+    }
+}
+
+@app.route('/settings', methods=['GET', 'POST'])
+def settings_page():
+    if request.method == 'POST':
+        settings['RESULTS_DIR'] = request.form.get('results_dir', 'results')
+        settings['DEFAULT_TIMEOUT'] = int(request.form.get('default_timeout', 10))
+        settings['USER_AGENT'] = request.form.get('user_agent', settings['USER_AGENT'])
+        
+        # API Keys
+        settings['API_KEYS']['VIRUSTOTAL_API_KEY'] = request.form.get('virustotal_api_key', '')
+        settings['API_KEYS']['SHODAN_API_KEY'] = request.form.get('shodan_api_key', '')
+        settings['API_KEYS']['GOOGLE_API_KEY'] = request.form.get('google_api_key', '')
+        settings['API_KEYS']['CENSYS_API_ID'] = request.form.get('censys_api_id', '')
+        settings['API_KEYS']['CENSYS_API_SECRET'] = request.form.get('censys_api_secret', '')
+
+        # Export Settings
+        settings['EXPORT_SETTINGS']['enable_txt_export'] = request.form.get('enable_txt_export') == 'on'
+        settings['EXPORT_SETTINGS']['enable_csv_export'] = request.form.get('enable_csv_export') == 'on'
+
+        # Logging Settings
+        settings['LOG_SETTINGS']['enable_logging'] = request.form.get('enable_logging') == 'on'
+        settings['LOG_SETTINGS']['log_file'] = request.form.get('log_file', 'argus.log')
+        settings['LOG_SETTINGS']['log_level'] = request.form.get('log_level', 'INFO')
+
+        # HTTP Headers
+        settings['HEADERS']['User-Agent'] = request.form.get('headers_user_agent', 'Argus-Scanner/1.0')
+        settings['HEADERS']['Accept-Language'] = request.form.get('headers_accept_language', 'en-US,en;q=0.9')
+
+        flash('Settings updated successfully!', 'success')
+        return redirect(url_for('settings_page'))
+
+    return render_template('settings.html', settings=settings)
 
 @app.errorhandler(500)
 def internal_error(error):
     return render_template('error.html', error_message="An unexpected error occurred on the server."), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    socketio.run(app, debug=True)

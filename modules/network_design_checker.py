@@ -22,7 +22,6 @@ def banner():
 
 class WebsiteChecker:
     def __init__(self, url):
-    
         if url.startswith("http://"):
             url = url[7:]
         elif url.startswith("https://"):
@@ -135,12 +134,12 @@ class WebsiteChecker:
         table.add_column("Value", justify="left", style="magenta")
 
         table.add_row("URL", self.url)
-        table.add_row("Status Code", str(self.status_code))
-        table.add_row("Response Time", f"{self.response_time:.4f} seconds")
-        table.add_row("Page Size", f"{self.page_size} bytes")
-        table.add_row("Title", self.title)
-        table.add_row("Meta Description", self.meta_description)
-        table.add_row("Meta Keywords", self.meta_keywords)
+        table.add_row("Status Code", str(self.status_code) if self.status_code is not None else "N/A")
+        table.add_row("Response Time", f"{self.response_time:.4f} seconds" if self.response_time is not None else "N/A")
+        table.add_row("Page Size", f"{self.page_size} bytes" if self.page_size is not None else "N/A")
+        table.add_row("Title", self.title if self.title else "No title found")
+        table.add_row("Meta Description", self.meta_description if self.meta_description else "No meta description found")
+        table.add_row("Meta Keywords", self.meta_keywords if self.meta_keywords else "No meta keywords found")
         table.add_row("Latency", f"{self.latency:.4f} seconds" if self.latency is not None else "N/A")
         table.add_row("Packet Loss", f"{self.packet_loss}%" if self.packet_loss is not None else "N/A")
         table.add_row("Open Ports", ", ".join(map(str, self.open_ports)) if self.open_ports else "None")

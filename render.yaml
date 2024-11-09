@@ -6,6 +6,6 @@ services:
   repo: https://github.com/ThemeHackers/Argus
   plan: free
   region: frankfurt
-  buildCommand: pip3 install -r requirements.txt
+  buildCommand: pip install -r requirements.txt
   startCommand: .venv/bin/gunicorn -b 0.0.0.0:$PORT app:app
 version: "1"

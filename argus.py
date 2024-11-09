@@ -1,35 +1,13 @@
+from flask import Flask, render_template, request, redirect, url_for
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import subprocess
 import os
 import sys
-import time
-import subprocess
-import random
-import platform
-from collections import defaultdict
-from rich.console import Console
-from rich.table import Table
-from rich.prompt import Prompt
-from rich.panel import Panel
-from rich.box import SIMPLE_HEAVY
-from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
-from colorama import Fore, init
 
-from utils.report_generator import generate_report
-from utils.util import check_api_configured, clean_domain_input
+app = Flask(__name__)
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
-from config import settings
-
-init(autoreset=True)
-console = Console()
-
-if sys.version_info < (3, 0):
-    print("This script requires Python 3.")
-    sys.exit(1)
-
-VERSION = "0.1.1"
-AUTHOR1 = "Jason13"
-AUTHOR2 = "HackerTheme"
-
+os.environ['PYDEVD_DISABLE_FILE_VALIDATION'] = '1'
 # Define tools with updated module numbers
 tools = [
     # Network & Infrastructure 
@@ -94,216 +72,50 @@ tools = [
     {'number': '56', 'name': 'Subdomain Enumeration', 'script': 'subdomain_enum.py', 'section': 'Security & Threat Intelligence'},
     {'number': '57', 'name': 'Subdomain Takeover', 'script': 'subdomain_takeover.py', 'section': 'Security & Threat Intelligence'},
     {'number': '58', 'name': 'VirusTotal Scan', 'script': 'virustotal_scan.py', 'section': 'Security & Threat Intelligence'},
-
-    {'number': '100', 'name': 'Run All Infrastructure Tools', 'script': '', 'section': 'Run All Scripts'},
-    {'number': '200', 'name': 'Run All Web Intelligence Tools', 'script': '', 'section': 'Run All Scripts'},
-    {'number': '300', 'name': 'Run All Security Tools', 'script': '', 'section': 'Run All Scripts'},
-
-    # Special Mode
-    {'number': '00', 'name': 'BEAST MODE', 'script': '', 'section': 'Special Mode'},
 ]
 
-# Create a mapping for quick tool lookup
-tools_mapping = {tool['number']: tool for tool in tools}
+# Set up the rate limiter with a global limit
+limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"])
 
-# Count the number of modules
-number_of_modules = len([tool for tool in tools if tool['script'] and tool['section'] not in ['Run All Scripts', 'Special Mode']])
+# Home route
+@app.route('/')
+def index():
+    return render_template('/index.html', tools=tools)
 
-def clear_screen():
-    os.system('cls' if os.name == 'nt' else 'clear')
+# Run selected tool with rate limiting
+@app.route('/run_tool', methods=['POST'])
+@limiter.limit("10 per minute")  # Limit: 10 requests per minute per IP
+def run_tool():
+    tool_number = request.form['tool']
+    domain = request.form['domain']
+    
+    # Find the selected tool
+    tool = next((tool for tool in tools if tool['number'] == tool_number), None)
+    if not tool:
+        return render_template('error.html', error_message="Selected tool not found. Please try again.")
 
-def logo():
-    ascii_art = f"""
- █████╗ ██████╗  ██████╗ ██╗   ██╗███████╗
-██╔══██╗██╔══██╗██╔════╝ ██║   ██║██╔════╝
-███████║██████╔╝██║  ███╗██║   ██║███████╗
-██╔══██║██╔══██╗██║   ██║██║   ██║╚════██║
-██║  ██║██║  ██║╚██████╔╝╚██████╔╝███████║
-╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝    
-
-Developed By: {AUTHOR1} {AUTHOR2}
-    """
-    lines = ascii_art.strip("\n").split("\n")
-    colors = ["red", "green", "yellow", "blue", "magenta", "cyan", "white"]
-    colored_lines = []
-    for line in lines:
-        color = random.choice(colors)
-        colored_lines.append(f"[bold {color}]{line}[/bold {color}]")
-        time.sleep(0.05)
-    colored_ascii_art = "\n".join(colored_lines)
-    description = f"""
-[bold cyan]The Ultimate Information Gathering Tool[/bold cyan]
-
-Version: [bold green]{VERSION}[/bold green]    Modules: [bold yellow]{number_of_modules}[/bold yellow]    Coded by: [bold magenta]{AUTHOR1} {AUTHOR2}[/bold magenta]
-    """.strip()
-    combined_text = f"{colored_ascii_art}\n{description}"
-    panel_color = random.choice(colors)
-    console.print(Panel(combined_text, border_style=panel_color, padding=(1, 4)), justify="left")
-
-def display_table():
-    table = Table(box=SIMPLE_HEAVY)
-    sections = ['Network & Infrastructure', 'Web Application Analysis', 'Security & Threat Intelligence']
-    table.add_column("Network & Infrastructure", justify="left", style="cyan", no_wrap=True)
-    table.add_column("Web Application Analysis", justify="left", style="green", no_wrap=True)
-    table.add_column("Security & Threat Intelligence", justify="left", style="magenta", no_wrap=True)
-    tools_by_section = defaultdict(list)
-    for tool in tools:
-        if tool['section'] in sections:
-            tools_by_section[tool['section']].append(f"[bold]{tool['number']}[/bold]. {tool['name']}")
-    max_tools = max(len(tools_by_section[section]) for section in sections)
-    for idx in range(max_tools):
-        row = []
-        for section in sections:
-            if idx < len(tools_by_section[section]):
-                row.append(tools_by_section[section][idx])
-            else:
-                row.append("")
-        table.add_row(*row)
-    table.add_row("", "", "")
-    table.add_row("", "", "")
-    table.add_row("[bold][X][/bold]. Run All Infrastructure Tools", "[bold][Y][/bold]. Run All Web Intelligence Tools", "[bold][Z][/bold]. Run All Security Tools")
-    table.add_row("", "", "")
-    table.add_row("", "[bold red]" + "-" * 15 + " 00. BEAST MODE " + "-" * 15 + "[/bold red]", "")
-    console.print(table)
-
-def check_api_modules():
-    api_status = {
-        'VirusTotal': check_api_configured('VIRUSTOTAL_API_KEY'),
-        'Shodan': check_api_configured('SHODAN_API_KEY'),
-        'SSL Labs': check_api_configured('SSL_LABS_API_KEY'),
-        'Google PageSpeed': check_api_configured('GOOGLE_PAGESPEED_API_KEY')
-    }
-    return api_status
-
-# Function for BEAST MODE execution
-def beast_mode():
-    clear_screen()
-    console.print("[bold red][*] Running BEAST MODE - Executing All Modules [/bold red]")
-    api_status = check_api_modules()
-    excluded_scripts = ['subdomain_takeover.py', 'data_leak.py']
-    selected_modules = [tool['number'] for tool in tools if tool['script'] and tool['script'] not in excluded_scripts and tool['number'] != '00']
-    run_modules(selected_modules, api_status, mode_name='BEAST_MODE')
-
-def execute_script(script_name, target):
-    script_path = os.path.join("modules", script_name)
-    output = ""
-    if os.path.isfile(script_path):
-        try:
-            with console.status(f"[bold green]Running {script_name}...[/bold green]", spinner="dots"):
-                process = subprocess.Popen(
-                    [sys.executable, script_path, target],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True
-                )
-                for line in iter(process.stdout.readline, ''):
-                    if line:
-                        stripped_line = line.strip()
-                        console.print(stripped_line)
-                        output += stripped_line + "\n"  
-                    else:
-                        break
-                process.stdout.close()
-                return_code = process.wait()
-                if return_code != 0:
-                    console.print(f"[!] Error running {script_name}", style="bold red")
-        except Exception as e:
-            console.print(f"[!] An unexpected error occurred while running {script_name}: {e}", style="bold red")
-    else:
-        console.print(f"Script {script_name} not found in 'modules' directory.", style="bold red")
-    return output  
-
-
-def run_modules(selected_modules, api_status, mode_name=None):
-    while True:
-        domain = Prompt.ask("[bold yellow]Enter the target domain or URL[/bold yellow]")
-        domain = clean_domain_input(domain)
-        if not domain:
-            console.print("[!] The domain cannot be empty. Please enter a valid domain.", style="bold red")
-            continue
-        
-        report_data = {}
-
-        for mod_number in selected_modules:
-            tool = tools_mapping.get(mod_number)
-            if tool and tool['script']:
-                module_name = tool['name']
-                script_name = tool['script']
-                output = execute_script(script_name, domain)
-                if output:
-                    report_data[module_name] = output
-                    console.print(output)
-            else:
-                console.print(f"[!] Invalid module number: {mod_number}", style="bold red")
-
-        if mode_name:
-            module_names = [mode_name]
-        elif len(selected_modules) == 1:
-            module_names = [tools_mapping[selected_modules[0]]['name']]
-        else:
-            module_names = ['multiple_modules']
-
-        generate_report(report_data, domain, module_names)
-
-        Prompt.ask("\n[bold yellow]Press Enter to continue...[/bold yellow]")
-        main()
-
-
-import subprocess
-import sys
-from rich.console import Console
-from rich.prompt import Prompt
-
-console = Console()
-def clear_screen():
-
-    os.system('cls' if platform.system() == 'Windows' else 'clear')
-def main():
-    clear_screen()
-    logo()
-    display_table()
-
+    # Check if the script exists for the tool
+    if not tool['script']:
+        return render_template('error.html', error_message="This tool does not have an associated script.")
+    
+    script_path = os.path.join('modules', tool['script'])
     try:
-        while True:
-            choice = Prompt.ask("[bold red]root@argus:~#[/bold red]").strip()
+        result = subprocess.run([sys.executable, script_path, domain],
+                                capture_output=True, text=True, check=True)
+        output = result.stdout
+    except Exception as e:
+        output = f"Error: {str(e)}"
+    
+    return render_template('result.html', output=output)
 
-            if choice == '00':
-                beast_mode()
-            elif choice.lower() == 'x': 
-                selected_modules = [tool['number'] for tool in tools if tool['section'] == 'Network & Infrastructure']
-                run_modules(selected_modules, check_api_modules(), mode_name='All_Infrastructure_Tools')
-            elif choice.lower() == 'y':  
-                selected_modules = [tool['number'] for tool in tools if tool['section'] == 'Web Application Analysis']
-                run_modules(selected_modules, check_api_modules(), mode_name='All_Web_Intelligence_Tools')
-            elif choice.lower() == 'z':  
-                selected_modules = [tool['number'] for tool in tools if tool['section'] == 'Security & Threat Intelligence']
-                run_modules(selected_modules, check_api_modules(), mode_name='All_Security_Tools')
-            elif choice.lower() in ['exit', 'quit']:
-                console.print("[bold green]Exiting Argus. Goodbye![/bold green]")
-                sys.exit(0)
-            elif choice == 'cls':
-                clear_screen()
-            elif not choice: 
-                console.print("[bold yellow]Please select a module to use.[/bold yellow]")
-                display_table()  
-            else:
-                
-                selected_modules = [mod.strip() for mod in choice.replace(',', ' ').split()]
-                if all(mod in tools_mapping for mod in selected_modules):
-                    run_modules(selected_modules, check_api_modules())
-                else:
-                   
-                    try:
-                        result = subprocess.run(choice, shell=True, check=True, capture_output=True, text=True)
-                        console.print(result.stdout)  
-                    except subprocess.CalledProcessError as e:
-                        console.print(f"[bold red]Error: {e.stderr}[/bold red]")  
-                    except Exception as e:
-                        console.print(f"[bold red]An unexpected error occurred: {str(e)}[/bold red]")
+# Error handling
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('error.html', error_message="Page not found. Please check the URL."), 404
 
-    except KeyboardInterrupt:
-        console.print('\n[bold red]Script interrupted by user.[/bold red]')
-        sys.exit()
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('error.html', error_message="An unexpected error occurred on the server."), 500
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)

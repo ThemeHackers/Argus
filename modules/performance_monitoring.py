@@ -2,6 +2,7 @@ import os
 import sys
 import requests
 import re
+import time
 from rich.console import Console
 from rich.table import Table
 from colorama import init, Fore
@@ -14,7 +15,6 @@ init(autoreset=True)
 console = Console()
 
 GOOGLE_API_KEY = API_KEYS.get("GOOGLE_API_KEY")
-DEFAULT_TIMEOUT = 10  # Set a default timeout
 
 def banner():
     console.print("""
@@ -27,10 +27,10 @@ def banner():
 
 def validate_url(url):
     url_pattern = re.compile(
-        r'^(https?://)?'          # Optional scheme
-        r'(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})'  # Domain
-        r'(:[0-9]{1,5})?'         # Optional port
-        r'(/.*)?$'                # Optional path
+        r'^(https?://)?'          
+        r'(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})'  
+        r'(:[0-9]{1,5})?'         
+        r'(/.*)?$'                
     )
     return re.match(url_pattern, url) is not None
 
@@ -42,7 +42,7 @@ def get_performance_metrics(url):
             return None
 
         api_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={clean_target}&strategy=mobile&key={GOOGLE_API_KEY}"
-        response = requests.get(api_url, timeout=DEFAULT_TIMEOUT)
+        response = requests.get(api_url)
 
         if response.status_code == 200:
             return response.json()
@@ -73,11 +73,35 @@ def display_performance_metrics(metrics):
     else:
         console.print("[red][!] No performance data to display.[/red]")
 
+# 1. Fetch additional insights such as FCP and LCP
+def get_additional_insights(metrics):
+    try:
+        fcp = metrics.get("lighthouseResult", {}).get("audits", {}).get("first-contentful-paint", {}).get("displayValue", "N/A")
+        lcp = metrics.get("lighthouseResult", {}).get("audits", {}).get("largest-contentful-paint", {}).get("displayValue", "N/A")
+
+        console.print(f"First Contentful Paint (FCP): {fcp}")
+        console.print(f"Largest Contentful Paint (LCP): {lcp}")
+    except Exception as e:
+        console.print(Fore.RED + f"[!] Error extracting insights: {e}")
+
+# 2. Add delay to handle multiple requests
+def process_urls_with_delay(targets, delay=2):
+    for url in targets:
+        console.print(Fore.WHITE + f"[*] Fetching performance metrics for {url} with delay...")
+        metrics = get_performance_metrics(url)
+        if metrics:
+            display_performance_metrics(metrics)
+            get_additional_insights(metrics)
+        else:
+            console.print(Fore.RED + f"[!] Failed to retrieve metrics for {url}.")
+        
+        time.sleep(delay)  # Introduce delay between requests
+
 def main(targets):
     banner()
     if not GOOGLE_API_KEY:
         console.print(Fore.RED + "[!] Google API key is not set. Please set it in config/settings.py or as an environment variable.")
-        sys.exit(1)
+        return  # Changed from sys.exit(1) to return
 
     cleaned_targets = []
     for target in targets:
@@ -89,13 +113,19 @@ def main(targets):
 
     if not cleaned_targets:
         console.print(Fore.RED + "[!] No valid URLs to scan.")
-        sys.exit(1)
+        return  # Changed from sys.exit(1) to return
 
+    collected_metrics = []
     for url in cleaned_targets:
         console.print(Fore.WHITE + f"[*] Fetching performance metrics for {url}...")
         metrics = get_performance_metrics(url)
         if metrics:
             display_performance_metrics(metrics)
+            get_additional_insights(metrics)
+            performance_score = metrics.get("lighthouseResult", {}).get("categories", {}).get("performance", {}).get("score", "N/A")
+            fcp = metrics.get("lighthouseResult", {}).get("audits", {}).get("first-contentful-paint", {}).get("displayValue", "N/A")
+            lcp = metrics.get("lighthouseResult", {}).get("audits", {}).get("largest-contentful-paint", {}).get("displayValue", "N/A")
+            collected_metrics.append({"url": url, "performance_score": performance_score, "fcp": fcp, "lcp": lcp})
         else:
             console.print(Fore.RED + f"[!] Failed to retrieve metrics for {url}.")
     
@@ -107,10 +137,9 @@ if __name__ == "__main__":
             main(sys.argv[1:])
         except KeyboardInterrupt:
             console.print(Fore.RED + "\n[!] Process interrupted by user.")
-            sys.exit(1)
+            sys.exit(1)  # You can keep sys.exit here if a manual interruption occurs
         except Exception as e:
             console.print(Fore.RED + f"\n[!] An unexpected error occurred: {e}")
             sys.exit(1)
     else:
         console.print(Fore.RED + "[!] No target provided. Please pass one or more URLs.")
-        sys.exit(1)

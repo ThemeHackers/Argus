@@ -11,7 +11,7 @@ from colorama import Fore, init
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.util import clean_url, validate_url
 from config.settings import API_KEYS
-
+from rich import box
 # Initialize Colorama and Console
 init(autoreset=True)
 console = Console()
@@ -88,7 +88,7 @@ def generate_stats(all_scan_data):
     
     detection_percentage = (total_positives / total_engines * 100) if total_engines else 0
     
-    table = Table(title="VirusTotal Scan Statistics", box="ROUNDED")
+    table = Table(title="VirusTotal Scan Statistics", box=box.ROUNDED)  # Updated box initialization
     table.add_column("Metric", style="cyan", justify="left")
     table.add_column("Value", style="green", justify="left")
     

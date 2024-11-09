@@ -14,4 +14,3 @@ blessings
 flask
 gunicorn
 flask_limiter
-redis

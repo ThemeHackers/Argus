@@ -1,6 +1,3 @@
-# GNU GENERAL PUBLIC LICENSE 
-# Version 3, 29 June 2007
-# Copyright © 2007 Free Software Foundation, Inc. <http://fsf.org/>
 import sys
 import requests
 from bs4 import BeautifulSoup
@@ -25,12 +22,14 @@ def banner():
 
 class WebsiteChecker:
     def __init__(self, url):
+    
         if url.startswith("http://"):
-            url = url[7:]  
+            url = url[7:]
         elif url.startswith("https://"):
-            url = url[8:] 
+            url = url[8:]
         
-        self.url = "https://" + url 
+        self.url = "https://" + url
+        self.hostname = url  
         self.status_code = None
         self.title = None
         self.meta_description = None
@@ -69,11 +68,10 @@ class WebsiteChecker:
         self.meta_keywords = keywords_tag['content'] if keywords_tag else "No meta keywords found"
 
     def check_ssl(self):
-        hostname = self.url[8:]  
         context = ssl.create_default_context()
         try:
-            with context.wrap_socket(socket.socket(), server_hostname=hostname) as s:
-                s.connect((hostname, 443))
+            with context.wrap_socket(socket.socket(), server_hostname=self.hostname) as s:
+                s.connect((self.hostname, 443))
                 cert = s.getpeercert()
                 self.ssl_info = cert
                 console.print("SSL Certificate is valid.", style="green")
@@ -90,27 +88,23 @@ class WebsiteChecker:
             self.latency = None
 
     def check_packet_loss(self):
-        hostname = self.url[8:]  
-        ping_command = ['ping', '-c', '10', hostname] if os.name != 'nt' else ['ping', '-n', '10', hostname]
+        ping_command = ['ping', '-c', '10', self.hostname] if os.name != 'nt' else ['ping', '-n', '10', self.hostname]
         completed_process = subprocess.run(ping_command, capture_output=True, text=True)
         output = completed_process.stdout
 
-        # Debugging output to see the result of the ping command
         console.print(f"Ping output:\n{output}")
 
         if "100% loss" in output:
             self.packet_loss = 100
         else:
-            # Extract packet loss percentage from the output using regex
             loss_line = [line for line in output.splitlines() if 'loss' in line]
             if loss_line:
                 try:
-                    # Use regex to find the percentage of packet loss
                     loss_percentage = re.search(r'(\d+)% packet loss', loss_line[0])
                     if loss_percentage:
-                        self.packet_loss = int(loss_percentage.group(1))  # Convert to int
+                        self.packet_loss = int(loss_percentage.group(1))
                     else:
-                        self.packet_loss = None  # No percentage found
+                        self.packet_loss = None
                 except (IndexError, ValueError) as e:
                     console.print(f"Error parsing packet loss: {e}", style="red")
                     self.packet_loss = None
@@ -118,11 +112,14 @@ class WebsiteChecker:
     def check_ports(self, ports):
         self.open_ports = []
         for port in ports:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.settimeout(1)
-                result = sock.connect_ex((self.url[8:], port))
-                if result == 0:
-                    self.open_ports.append(port)
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                    sock.settimeout(1)
+                    result = sock.connect_ex((self.hostname, port))
+                    if result == 0:
+                        self.open_ports.append(port)
+            except socket.gaierror as e:
+                console.print(f"Error connecting to {self.hostname} on port {port}: {e}", style="red")
 
     def check_connectivity(self):
         try:
@@ -137,7 +134,6 @@ class WebsiteChecker:
         table.add_column("Property", justify="left", style="cyan", no_wrap=True)
         table.add_column("Value", justify="left", style="magenta")
 
-        # Populate table with results
         table.add_row("URL", self.url)
         table.add_row("Status Code", str(self.status_code))
         table.add_row("Response Time", f"{self.response_time:.4f} seconds")
@@ -152,19 +148,30 @@ class WebsiteChecker:
 
         console.print(table)
 
+def check_dns_resolution(target):
+    try:
+        socket.gethostbyname(target)
+        return True
+    except socket.gaierror:
+        console.print(f"[Error] Unable to resolve hostname: {target}", style="red")
+        return False
+
 def main(target):
     banner()
+   
+    if not check_dns_resolution(target):
+        return  
+    
     checker = WebsiteChecker(target)
     checker.check_website()
     checker.check_latency()
     checker.check_packet_loss()
-    checker.check_ports([80, 443, 21, 22, 25])  # Example ports to check
+    checker.check_ports([80, 443, 21, 22, 25])  
     checker.display_results()
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         console.print("[!] Please provide a target host.", style="red")
-        sys.exit(1)
-    
-    target_host = sys.argv[1]
-    main(target_host)
+    else:
+        target_host = sys.argv[1]
+        main(target_host)

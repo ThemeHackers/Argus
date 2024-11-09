@@ -1,22 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for , get_flashed_messages , jsonify , flash
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-import redis
 import subprocess
 import os
 import sys
-
+import requests
 app = Flask(__name__)
-# Initialize Redis client
-redis_client = redis.Redis(host='localhost', port=6379, db=0)
+app.config['SECRET_KEY'] = os.urandom(24).hex()
 
-# Configure flask-limiter with Redis
-limiter = Limiter(
-    get_remote_address,
-    storage_uri="redis://localhost:6379",
-    app=app
-)
-os.environ['PYDEVD_DISABLE_FILE_VALIDATION'] = '1'
 # Define tools with updated module numbers
 tools = [
     # Network & Infrastructure 
@@ -83,14 +74,25 @@ tools = [
     {'number': '58', 'name': 'VirusTotal Scan', 'script': 'virustotal_scan.py', 'section': 'Security & Threat Intelligence'},
 ]
 
+
 # Home route
 @app.route('/')
 def index():
     return render_template('/index.html', tools=tools)
 
+@app.route('/check_connection')
+def check_connection():
+    try:
+        # Here, we try to make a request to the server itself to check the server's status.
+        response = requests.get("http://127.0.0.1:5000/")  # Replace with your server URL if different
+        if response.status_code == 200:
+            return jsonify({"status": "online"}), 200
+    except requests.exceptions.RequestException as e:
+        print(f"Connection error: {e}")
+        return jsonify({"status": "offline", "error": str(e)}), 500
+
 # Run selected tool with rate limiting
 @app.route('/run_tool', methods=['POST'])
-@limiter.limit("10 per minute")  # Limit: 10 requests per minute per IP
 def run_tool():
     tool_number = request.form['tool']
     domain = request.form['domain']
@@ -118,10 +120,65 @@ def run_tool():
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('error.html', error_message="Page not found. Please check the URL."), 404
+settings = {
+    "RESULTS_DIR": "results",
+    "DEFAULT_TIMEOUT": 10,
+    "USER_AGENT": "Mozilla/5.0 (compatible; ArgusBot/1.0; )",
+    "API_KEYS": {
+        "VIRUSTOTAL_API_KEY": "",
+        "SHODAN_API_KEY": "",
+        "GOOGLE_API_KEY": "",
+        "CENSYS_API_ID": "",
+        "CENSYS_API_SECRET": ""
+    },
+    "EXPORT_SETTINGS": {
+        "enable_txt_export": True,
+        "enable_csv_export": False
+    },
+    "LOG_SETTINGS": {
+        "enable_logging": True,
+        "log_file": "argus.log",
+        "log_level": "INFO"
+    },
+    "HEADERS": {
+        "User-Agent": "Argus-Scanner/1.0",
+        "Accept-Language": "en-US,en;q=0.9"
+    }
+}
+
+@app.route('/settings', methods=['GET', 'POST'])
+def settings_page():
+    if request.method == 'POST':
+
+        # Update the settings with form data
+        settings["RESULTS_DIR"] = request.form.get('results_dir', settings["RESULTS_DIR"])
+        settings["DEFAULT_TIMEOUT"] = request.form.get('default_timeout', settings["DEFAULT_TIMEOUT"])
+        settings["USER_AGENT"] = request.form.get('user_agent', settings["USER_AGENT"])
+
+        settings["API_KEYS"]['VIRUSTOTAL_API_KEY'] = request.form.get('virustotal_api_key', settings["API_KEYS"]['VIRUSTOTAL_API_KEY'])
+        settings["API_KEYS"]['SHODAN_API_KEY'] = request.form.get('shodan_api_key', settings["API_KEYS"]['SHODAN_API_KEY'])
+        settings["API_KEYS"]['GOOGLE_API_KEY'] = request.form.get('google_api_key', settings["API_KEYS"]['GOOGLE_API_KEY'])
+        settings["API_KEYS"]['CENSYS_API_ID'] = request.form.get('censys_api_id', settings["API_KEYS"]['CENSYS_API_ID'])
+        settings["API_KEYS"]['CENSYS_API_SECRET'] = request.form.get('censys_api_secret', settings["API_KEYS"]['CENSYS_API_SECRET'])
+
+        settings["EXPORT_SETTINGS"]['enable_txt_export'] = 'enable_txt_export' in request.form
+        settings["EXPORT_SETTINGS"]['enable_csv_export'] = 'enable_csv_export' in request.form
+
+        settings["LOG_SETTINGS"]['enable_logging'] = 'enable_logging' in request.form
+        settings["LOG_SETTINGS"]['log_file'] = request.form.get('log_file', settings["LOG_SETTINGS"]['log_file'])
+        settings["LOG_SETTINGS"]['log_level'] = request.form.get('log_level', settings["LOG_SETTINGS"]['log_level'])
+
+        settings["HEADERS"]['User-Agent'] = request.form.get('headers_user_agent', settings["HEADERS"]['User-Agent'])
+        settings["HEADERS"]['Accept-Language'] = request.form.get('headers_accept_language', settings["HEADERS"]['Accept-Language'])
+
+        flash('Settings updated successfully!', 'success')
+        return redirect('/settings')
+
+    return render_template('settings.html', settings=settings)
 
 @app.errorhandler(500)
 def internal_error(error):
     return render_template('error.html', error_message="An unexpected error occurred on the server."), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    app.run(host='0.0.0.0', port=10000, debug=True)

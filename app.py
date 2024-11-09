@@ -1,12 +1,21 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import redis
 import subprocess
 import os
 import sys
 
 app = Flask(__name__)
+# Initialize Redis client
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
+# Configure flask-limiter with Redis
+limiter = Limiter(
+    get_remote_address,
+    storage_uri="redis://localhost:6379",
+    app=app
+)
 os.environ['PYDEVD_DISABLE_FILE_VALIDATION'] = '1'
 # Define tools with updated module numbers
 tools = [
@@ -73,9 +82,6 @@ tools = [
     {'number': '57', 'name': 'Subdomain Takeover', 'script': 'subdomain_takeover.py', 'section': 'Security & Threat Intelligence'},
     {'number': '58', 'name': 'VirusTotal Scan', 'script': 'virustotal_scan.py', 'section': 'Security & Threat Intelligence'},
 ]
-
-# Set up the rate limiter with a global limit
-limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"])
 
 # Home route
 @app.route('/')

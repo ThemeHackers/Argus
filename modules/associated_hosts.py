@@ -1,16 +1,21 @@
-# GNU GENERAL PUBLIC LICENSE 
-# Version 3, 29 June 2007
-# Copyright © 2007 Free Software Foundation, Inc. <http://fsf.org/>
 import os
 import sys
 import requests
+import json
 from colorama import Fore, init, Style
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config.settings import DEFAULT_TIMEOUT, API_KEYS  
 from utils.util import resolve_to_ip  
 
 init(autoreset=True)
+
+CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), '../config/settings.json')
+
+
+with open(CONFIG_FILE_PATH, 'r') as config_file:
+    config = json.load(config_file)
+
+API_KEYS = config.get("API_KEYS", {})
 
 def banner():
     print(Fore.WHITE + """
@@ -24,9 +29,8 @@ def get_associated_hosts_shodan(ip):
     if not api_key:
         print(Fore.WHITE + "[!] Shodan API key not configured, using HackerTarget instead..." + Style.RESET_ALL)
         return "NO_API"
-
     try:
-        response = requests.get(f"https://api.shodan.io/shodan/host/{ip}?key={api_key}", timeout=DEFAULT_TIMEOUT)
+        response = requests.get(f"https://api.shodan.io/shodan/host/{ip}?key={api_key}", timeout=config.get("DEFAULT_TIMEOUT", 125))
         if response.status_code == 200:
             data = response.json()
             return data.get('hostnames', [])
@@ -39,7 +43,7 @@ def get_associated_hosts_shodan(ip):
 
 def get_associated_hosts_hackertarget(ip):
     try:
-        response = requests.get(f"https://api.hackertarget.com/reverseiplookup/?q={ip}", timeout=DEFAULT_TIMEOUT)
+        response = requests.get(f"https://api.hackertarget.com/reverseiplookup/?q={ip}", timeout=config.get("DEFAULT_TIMEOUT", 125))
         if response.status_code == 200 and "error" not in response.text.lower():
             hosts = response.text.strip().split("\n")
             return hosts

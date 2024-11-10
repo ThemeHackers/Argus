@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 import re
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.settings import API_KEYS
+from config.app_settings import API_KEYS
 
 init(autoreset=True)
 console = Console()

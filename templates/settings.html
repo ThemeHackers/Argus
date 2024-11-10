@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <title>API Settings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #555;
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #333;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .back-button {
+            background-color: #555;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            display: inline-block;
+            text-align: center;
+        }
+        .back-button:hover {
+            background-color: #333;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+        .message-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .message-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Settings</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                    <li class="message-{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    <form method="post">
+        <h2>General Settings</h2>
+        <label>Results Directory:</label>
+        <input type="text" name="results_dir" value="{{ settings.RESULTS_DIR }}"><br>
+
+        <label>Default Timeout (seconds):</label>
+        <input type="number" name="default_timeout" value="{{ settings.DEFAULT_TIMEOUT }}"><br>
+
+        <label>User Agent:</label>
+        <input type="text" name="user_agent" value="{{ settings.USER_AGENT }}"><br>
+
+        <h2>API Keys</h2>
+        <label>VirusTotal API Key:</label>
+        <input type="text" name="virustotal_api_key" value="{{ settings['VIRUSTOTAL_API_KEY'] }}"><br>
+
+        <label>Shodan API Key:</label>
+        <input type="text" name="shodan_api_key" value="{{ settings['API_KEYS']['SHODAN_API_KEY'] }}"><br>
+
+        <label>Google API Key:</label>
+        <input type="text" name="google_api_key" value="{{ settings['API_KEYS']['GOOGLE_API_KEY'] }}"><br>    
+
+        <label>Censys API ID:</label>
+        <input type="text" name="censys_api_id" value="{{ settings['API_KEYS']['CENSYS_API_ID'] }}"><br>
+
+        <label>Censys API Secret:</label>
+        <input type="text" name="censys_api_secret" value="{{ settings['API_KEYS']['CENSYS_API_SECRET'] }}"><br>
+
+        <h2>Export Settings</h2>
+        <label>
+            <input type="checkbox" name="enable_txt_export" {% if settings.EXPORT_SETTINGS.enable_txt_export %}checked{% endif %}>
+            Enable TXT Export
+        </label><br>
+
+        <label>
+            <input type="checkbox" name="enable_csv_export" {% if settings.EXPORT_SETTINGS.enable_csv_export %}checked{% endif %}>
+            Enable CSV Export
+        </label><br>
+
+        <h2>Logging Settings</h2>
+        <label>
+            <input type="checkbox" name="enable_logging" {% if settings.LOG_SETTINGS.enable_logging %}checked{% endif %}>
+            Enable Logging
+        </label><br>
+
+        <label>Log File:</label>
+        <input type="text" name="log_file" value="{{ settings.LOG_SETTINGS.log_file }}"><br>
+
+        <label>Log Level:</label>
+        <select name="log_level">
+            <option value="DEBUG" {% if settings.LOG_SETTINGS.log_level == "DEBUG" %}selected{% endif %}>DEBUG</option>
+            <option value="INFO" {% if settings.LOG_SETTINGS.log_level == "INFO" %}selected{% endif %}>INFO</option>
+            <option value="WARNING" {% if settings.LOG_SETTINGS.log_level == "WARNING" %}selected{% endif %}>WARNING</option>
+            <option value="ERROR" {% if settings.LOG_SETTINGS.log_level == "ERROR" %}selected{% endif %}>ERROR</option>
+            <option value="CRITICAL" {% if settings.LOG_SETTINGS.log_level == "CRITICAL" %}selected{% endif %}>CRITICAL</option>
+        </select><br>
+
+        <h2>HTTP Headers</h2>
+        <label>User-Agent:</label>
+        <input type="text" name="headers_user_agent" value="{{ settings.HEADERS['User-Agent'] }}"><br>
+
+        <label>Accept-Language:</label>
+        <input type="text" name="headers_accept_language" value="{{ settings.HEADERS['Accept-Language'] }}"><br>
+        <button type="submit">Save Settings</button>
+    </form>
+    
+    <a href="/" class="back-button">Back</a>
+</body>
+</html>

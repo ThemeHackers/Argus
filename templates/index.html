@@ -142,13 +142,13 @@
                 .then(data => {
                     const apiKeyStatus = document.getElementById('apiKeyStatus');
                     if (data.api_key_exists) {
-                        apiKeyStatus.innerHTML = '<span style="color: green;">API Key is configured</span>';
+                        apiKeyStatus.innerHTML = '<span style="color: green;">API KEY IS CONFIGURED</span>';
                     } else {
-                        apiKeyStatus.innerHTML = '<span style="color: red;">API Key is missing</span>';
+                        apiKeyStatus.innerHTML = '<span style="color: red;">API KEY IS MISSING</span>';
                     }
                 })
                 .catch(error => {
-                    document.getElementById('apiKeyStatus').innerHTML = '<span style="color: red;">Error checking API Key status</span>';
+                    document.getElementById('apiKeyStatus').innerHTML = '<span style="color: red;">ERROR CHECKING API KEY STATUS</span>';
                 });
         }
 

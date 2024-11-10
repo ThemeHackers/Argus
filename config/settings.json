@@ -1,0 +1,24 @@
+{
+    "RESULTS_DIR": "results",
+    "DEFAULT_TIMEOUT": 45,
+    "API_KEYS": {
+        "VIRUSTOTAL_API_KEY": "25f612d52c1f3b34a71ca239f26bef311325e04f7ca8b36857bee05810b995e8",
+        "SHODAN_API_KEY": "VmQnkUgcbyW8pV5C7UxA08ocY0T7yZG4",
+        "GOOGLE_API_KEY": "AIzaSyCCWTVA-EN3F9lY-NXttU0u8fkjWk-pvtU",
+        "CENSYS_API_ID": "3b1b9ff7-93ee-4264-8622-12529e65c828",
+        "CENSYS_API_SECRET": "b9Dcm36ELOvOyQYCcDt5MqZZxMnmv1kl"
+    },
+    "EXPORT_SETTINGS": {
+        "enable_txt_export": true,
+        "enable_csv_export": true
+    },
+    "LOG_SETTINGS": {
+        "enable_logging": true,
+        "log_file": "argus.log",
+        "log_level": "INFO"
+    },
+    "HEADERS": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59",
+        "Accept-Language": "en-US,en;q=0.9"
+    }
+}

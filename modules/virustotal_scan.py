@@ -2,6 +2,7 @@
 # Version 3, 29 June 2007
 # Copyright © 2007 Free Software Foundation, Inc. <http://fsf.org/>
 import os
+import json
 import sys
 import asyncio
 import aiohttp
@@ -10,11 +11,17 @@ from rich.table import Table
 from colorama import Fore, init
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.util import clean_url, validate_url
+from config.app_settings import API_KEYS
 from config.settings import API_KEYS
 from rich import box
+CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), '../config/settings.json')
 # Initialize Colorama and Console
 init(autoreset=True)
 console = Console()
+with open(CONFIG_FILE_PATH, 'r') as config_file:
+    config = json.load(config_file)
+
+API_KEYS = config.get("API_KEYS", {})
 
 def banner():
     console.print(Fore.GREEN + """
@@ -31,10 +38,17 @@ async def scan_with_virustotal(session, url, api_key):
     }
     try:
         async with session.get(api_url, params=params, timeout=15) as response:
+            # Debugging the full response
+            console.print(Fore.WHITE + f"[DEBUG] Response status: {response.status}")
+            console.print(Fore.WHITE + f"[DEBUG] Response headers: {response.headers}")
+            
             if response.status == 200:
                 return await response.json()
             else:
                 console.print(Fore.RED + f"[!] Error: Received status code {response.status} for URL: {url}")
+                # Debugging the body of the error message
+                error_message = await response.text()
+                console.print(Fore.RED + f"[DEBUG] Error message: {error_message}")
                 return None
     except asyncio.TimeoutError:
         console.print(Fore.RED + f"[!] Timeout while scanning URL: {url}")
@@ -88,7 +102,7 @@ def generate_stats(all_scan_data):
     
     detection_percentage = (total_positives / total_engines * 100) if total_engines else 0
     
-    table = Table(title="VirusTotal Scan Statistics", box=box.ROUNDED)  # Updated box initialization
+    table = Table(title="VirusTotal Scan Statistics", box=box.ROUNDED)  
     table.add_column("Metric", style="cyan", justify="left")
     table.add_column("Value", style="green", justify="left")
     

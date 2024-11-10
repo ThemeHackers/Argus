@@ -6,15 +6,12 @@ import time
 from rich.console import Console
 from rich.table import Table
 from colorama import init, Fore
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config.settings import API_KEYS
+from config.app_settings import API_KEYS 
 from utils.util import clean_url
 
 init(autoreset=True)
 console = Console()
-
-GOOGLE_API_KEY = API_KEYS.get("GOOGLE_API_KEY")
 
 def banner():
     console.print("""
@@ -37,11 +34,13 @@ def validate_url(url):
 def get_performance_metrics(url):
     try:
         clean_target = clean_url(url)
-        if not GOOGLE_API_KEY:
+        google_api_key = API_KEYS.get("GOOGLE_API_KEY")
+        
+        if not google_api_key:
             console.print("[red][!] Google API key not configured. Please set your API key in the configuration file.[/red]")
             return None
 
-        api_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={clean_target}&strategy=mobile&key={GOOGLE_API_KEY}"
+        api_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={clean_target}&strategy=mobile&key={google_api_key}"
         response = requests.get(api_url)
 
         if response.status_code == 200:
@@ -73,7 +72,6 @@ def display_performance_metrics(metrics):
     else:
         console.print("[red][!] No performance data to display.[/red]")
 
-# 1. Fetch additional insights such as FCP and LCP
 def get_additional_insights(metrics):
     try:
         fcp = metrics.get("lighthouseResult", {}).get("audits", {}).get("first-contentful-paint", {}).get("displayValue", "N/A")
@@ -84,7 +82,6 @@ def get_additional_insights(metrics):
     except Exception as e:
         console.print(Fore.RED + f"[!] Error extracting insights: {e}")
 
-# 2. Add delay to handle multiple requests
 def process_urls_with_delay(targets, delay=2):
     for url in targets:
         console.print(Fore.WHITE + f"[*] Fetching performance metrics for {url} with delay...")
@@ -95,13 +92,15 @@ def process_urls_with_delay(targets, delay=2):
         else:
             console.print(Fore.RED + f"[!] Failed to retrieve metrics for {url}.")
         
-        time.sleep(delay)  # Introduce delay between requests
-
+        time.sleep(delay)  
+        
 def main(targets):
     banner()
-    if not GOOGLE_API_KEY:
-        console.print(Fore.RED + "[!] Google API key is not set. Please set it in config/settings.py or as an environment variable.")
-        return  # Changed from sys.exit(1) to return
+    
+    google_api_key = API_KEYS.get("GOOGLE_API_KEY")
+    if not google_api_key:
+        console.print(Fore.RED + "[!] Google API key is not set. Please set it in config/app_settings.py or as an environment variable.")
+        return
 
     cleaned_targets = []
     for target in targets:
@@ -113,7 +112,7 @@ def main(targets):
 
     if not cleaned_targets:
         console.print(Fore.RED + "[!] No valid URLs to scan.")
-        return  # Changed from sys.exit(1) to return
+        return
 
     collected_metrics = []
     for url in cleaned_targets:
@@ -137,7 +136,7 @@ if __name__ == "__main__":
             main(sys.argv[1:])
         except KeyboardInterrupt:
             console.print(Fore.RED + "\n[!] Process interrupted by user.")
-            sys.exit(1)  # You can keep sys.exit here if a manual interruption occurs
+            sys.exit(1)
         except Exception as e:
             console.print(Fore.RED + f"\n[!] An unexpected error occurred: {e}")
             sys.exit(1)

@@ -42,7 +42,8 @@ class WebsiteChecker:
 
     def check_website(self):
         try:
-            response = requests.get(self.url)
+            console.print(f"Checking website: {self.url}", style="yellow")
+            response = requests.get(self.url, timeout=10)  # เพิ่ม timeout
             self.status_code = response.status_code
             self.response_time = response.elapsed.total_seconds()
             self.page_size = len(response.content)
@@ -75,8 +76,10 @@ class WebsiteChecker:
                 self.ssl_info = cert
                 console.print("SSL Certificate is valid.", style="green")
                 console.print(f"Expiration Date: {datetime.strptime(cert['notAfter'], '%b %d %H:%M:%S %Y GMT')}", style="green")
+        except ssl.SSLError as e:
+            console.print(f"SSL connection error: {e}", style="red")
         except Exception as e:
-            console.print(f"SSL Certificate error: {e}", style="red")
+            console.print(f"Error with SSL: {e}", style="red")
 
     def check_latency(self):
         start_time = time.time()
@@ -117,8 +120,8 @@ class WebsiteChecker:
                     result = sock.connect_ex((self.hostname, port))
                     if result == 0:
                         self.open_ports.append(port)
-            except socket.gaierror as e:
-                console.print(f"Error connecting to {self.hostname} on port {port}: {e}", style="red")
+            except socket.error as e:
+                console.print(f"Error checking port {port}: {e}", style="red")
 
     def check_connectivity(self):
         try:

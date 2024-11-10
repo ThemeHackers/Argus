@@ -5,7 +5,7 @@
     <title>Result</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <style>
         /* Background gradient */
         body {
@@ -23,7 +23,7 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-            max-width: 1300px;  /* Adjusted width for better output display */
+            max-width: 1300px;
             text-align: center;
         }
         h2 {
@@ -33,17 +33,17 @@
         }
         /* Output area styling */
         .output {
-            background-color: #f8f9fa;  /* Light background for the output */
-            border: 1px solid #dee2e6;  /* Border for better separation */
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
             border-radius: 8px;
             box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1);
-            overflow-x: auto;  /* Enables horizontal scrolling for long output */
-            max-height: 350px;  /* Limits the height of the output area */
+            overflow-x: auto;
+            max-height: 350px;
         }
         pre {
-            margin: 0;  /* Removes default margins */
-            white-space: pre-wrap;  /* Ensures long lines wrap */
-            word-wrap: break-word;  /* Allows breaking long words */
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
         /* Button styling */
         .btn-secondary {
@@ -54,6 +54,14 @@
             background-color: #6c757d;
             box-shadow: 0px 6px 12px rgba(108, 117, 125, 0.6);
         }
+        .btn-primary {
+            transition: all 0.3s ease;
+            box-shadow: 0px 4px 8px rgba(0, 123, 255, 0.4);
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            box-shadow: 0px 6px 12px rgba(0, 123, 255, 0.6);
+        }
     </style>
 </head>
 <body>
@@ -62,6 +70,14 @@
         <div class="output bg-light p-3 rounded">
             <pre>{{ output }}</pre>
         </div>
+        
+        <!-- Download Button if result_filename exists -->
+        {% if result_filename %}
+            <a href="{{ url_for('download_result', filename=result_filename) }}" class="btn btn-primary mt-3">
+                <i class="fas fa-download"></i> Download Results
+            </a>
+        {% endif %}
+        
         <a href="{{ url_for('index') }}" class="btn btn-secondary mt-3">Back to Tool Selection</a>
     </div>
 </body>

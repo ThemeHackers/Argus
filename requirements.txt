@@ -13,4 +13,5 @@ aioquic
 blessings
 flask
 gunicorn
+jsonify
 flask_limiter

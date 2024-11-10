@@ -5,28 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>API Settings</title>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --text-color: #333;
+            --button-bg: #007bff;
+            --button-hover-bg: #0056b3;
+            --back-button-bg: #6c757d;
+            --back-button-hover-bg: #495057;
+        }
+
+        /* Dark Mode Variables */
+        .dark-mode {
+            --bg-color: #1e1e1e;
+            --text-color: #f1f1f1;
+            --button-bg: #4CAF50;
+            --button-hover-bg: #45a049;
+            --back-button-bg: #555;
+            --back-button-hover-bg: #333;
+        }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f4f4f9;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
         }
+
         h1 {
-            color: #333;
             font-size: 24px;
             margin-bottom: 20px;
         }
+
         h2 {
-            color: #555;
             font-size: 20px;
             margin-top: 20px;
         }
+
         label {
             display: block;
             margin: 10px 0 5px;
-            color: #333;
         }
+
         input[type="text"], input[type="number"], select {
             width: 100%;
             padding: 8px;
@@ -34,48 +58,77 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        input[type="checkbox"] {
-            margin-right: 10px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .back-button {
-            background-color: #555;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+
+        /* Button Styling */
+        .button-container {
+            display: flex;
+            gap: 10px;
             margin-top: 20px;
-            display: inline-block;
-            text-align: center;
         }
-        .back-button:hover {
-            background-color: #333;
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
+        .btn-primary {
+            background-color: var(--button-bg);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--button-hover-bg);
+        }
+
+        .btn-back {
+            background-color: var(--back-button-bg);
+            border: none; /* Remove border */
+            text-decoration: none; /* Ensure no underline */
+        }
+        
+
+        .btn-back:hover {
+            background-color: var(--back-button-hover-bg);
+        }
+
+        .btn-refresh, .btn-toggle-mode {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .btn-refresh:hover, .btn-toggle-mode:hover {
+            background-color: #e0a800;
+        }
+
+        .btn i {
+            font-size: 1.1rem;
+        }
+
         ul {
             list-style: none;
             padding: 0;
         }
+
         li {
             padding: 5px;
             border: 1px solid #ddd;
             border-radius: 4px;
             margin-bottom: 5px;
         }
+
         .message-success {
             background-color: #d4edda;
             color: #155724;
         }
+
         .message-error {
             background-color: #f8d7da;
             color: #721c24;
@@ -84,6 +137,17 @@
 </head>
 <body>
     <h1>API Settings</h1>
+
+    <!-- Refresh and Toggle Mode Buttons -->
+    <div class="button-container">
+        <button class="btn btn-refresh" onclick="window.location.reload();">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+        <button class="btn btn-toggle-mode" onclick="toggleMode()">
+            <i class="fas fa-moon"></i> Toggle Dark/Light Mode
+        </button>
+    </div>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <ul>
@@ -93,6 +157,7 @@
             </ul>
         {% endif %}
     {% endwith %}
+
     <form method="post">
         <h2>General Settings</h2>
         <label>Results Directory:</label>
@@ -155,9 +220,31 @@
 
         <label>Accept-Language:</label>
         <input type="text" name="headers_accept_language" value="{{ settings.HEADERS['Accept-Language'] }}"><br>
-        <button type="submit">Save Settings</button>
+
+        <div class="button-container">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Settings
+            </button>
+            <a href="/" class="btn btn-back">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
     </form>
-    
-    <a href="/" class="back-button">Back</a>
+
+    <script>
+        // Toggle Dark/Light Mode
+        function toggleMode() {
+            document.body.classList.toggle("dark-mode");
+            // Toggle the moon/sun icon
+            const modeButton = document.querySelector('.btn-toggle-mode i');
+            if (document.body.classList.contains("dark-mode")) {
+                modeButton.classList.remove('fa-moon');
+                modeButton.classList.add('fa-sun');
+            } else {
+                modeButton.classList.remove('fa-sun');
+                modeButton.classList.add('fa-moon');
+            }
+        }
+    </script>
 </body>
 </html>

@@ -1,6 +1,3 @@
-# GNU GENERAL PUBLIC LICENSE 
-# Version 3, 29 June 2007
-# Copyright © 2007 Free Software Foundation, Inc. <http://fsf.org/>
 import sys
 import requests
 from urllib.parse import urlparse
@@ -8,22 +5,21 @@ from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich import box
-from colorama import Fore, init
 import argparse
 import threading
 import queue
 import time
 
-init(autoreset=True)
 console = Console()
 lock = threading.Lock()
 
 def banner():
-    console.print(Fore.GREEN + """
+    console.print("[bold green]")
+    console.print("""
     =============================================
            Argus - Advanced Data Leak Checker
     =============================================
-    """)
+    """, style="bold green")
 
 def clean_domain_input(domain: str) -> str:
     domain = domain.strip()
@@ -35,7 +31,16 @@ def clean_domain_input(domain: str) -> str:
 
 def get_email_addresses(domain):
     # Generate common email patterns
-    common_usernames = ['admin', 'contact', 'info', 'support', 'sales', 'webmaster', 'postmaster']
+    common_usernames = [
+        'admin', 'contact', 'info', 'support', 'sales', 
+        'webmaster', 'postmaster', 'billing', 'help', 'service', 
+        'team', 'feedback', 'security', 'noreply', 'office',
+        'marketing', 'hr', 'careers', 'jobs', 'media', 
+        'press', 'legal', 'privacy', 'abuse', 'complaints',
+        'inquiries', 'customercare', 'it', 'management', 'operations',
+        'partners', 'communications', 'newsletter', 'subscribe', 'unsubscribe',
+        'alerts', 'notifications', 'updates', 'news', 'webadmin'
+    ]
     emails = [f"{username}@{domain}" for username in common_usernames]
     return emails
 
@@ -56,11 +61,11 @@ def check_email_breaches(email, session):
                 return breaches
         else:
             with lock:
-                console.print(Fore.RED + f"[!] Error checking {email}: HTTP {response.status_code}")
+                console.print(f"[red][!] Error checking {email}: HTTP {response.status_code}")
             return None
     except requests.RequestException as e:
         with lock:
-            console.print(Fore.RED + f"[!] Error checking {email}: {e}")
+            console.print(f"[red][!] Error checking {email}: {e}")
         return None
 
 def parse_breaches(html_content):
@@ -78,7 +83,7 @@ def parse_breaches(html_content):
 def display_breaches(email, breaches):
     if not breaches:
         with lock:
-            console.print(Fore.GREEN + f"[+] No breaches found for {email}")
+            console.print(f"[green][+] No breaches found for {email}")
         return
     table = Table(title=f"Breaches for {email}", show_header=True, header_style="bold magenta", box=box.ROUNDED)
     table.add_column("Name", style="cyan", justify="left")
@@ -98,7 +103,7 @@ def worker(email_queue, session):
         if email is None:
             break
         with lock:
-            console.print(Fore.YELLOW + f"[*] Checking {email}")
+            console.print(f"[yellow][*] Checking {email}")
         breaches = check_email_breaches(email, session)
         if breaches is None:
             email_queue.task_done()
@@ -121,7 +126,7 @@ def main():
     else:
         emails = get_email_addresses(domain)
 
-    console.print(Fore.WHITE + f"[*] Checking data leaks for domain: {domain}")
+    console.print(f"[white][*] Checking data leaks for domain: {domain}")
 
     email_queue = queue.Queue()
     session = requests.Session()
@@ -146,11 +151,11 @@ def main():
     for t in threads:
         t.join()
 
-    console.print(Fore.CYAN + "[*] Data leak check completed.")
+    console.print("[cyan][*] Data leak check completed.")
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        console.print(Fore.RED + "\n[!] Process interrupted by user.")
+        console.print("[red]\n[!] Process interrupted by user.")
         sys.exit(1)

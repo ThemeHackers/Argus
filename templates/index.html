@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Argus - Web Application</title>
@@ -11,61 +12,91 @@
         body {
             background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
             height: 100vh;
+            /* Full height of the viewport */
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
             font-family: Arial, sans-serif;
         }
+
         /* Container styling */
         .container {
             background-color: #ffffff;
+            /* Set the background to solid white */
             padding: 60px;
+            /* Keep the original padding */
             border-radius: 10px;
             box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
             max-width: 600px;
+            /* Keep the original max-width */
             text-align: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            /* Keeps content aligned at the top */
+            min-height: 500px;
+            /* Keep the original min-height */
+            width: 100%;
         }
+
+
         /* Heading styling */
         h2 {
-            font-size: 2rem;
+            font-size: 2.3rem;
             color: #333;
-            font-weight: 600;
-            margin-bottom: 30px;
+            font-weight: 750;
+            margin-bottom: 10px;
         }
+
         /* Form field styling */
-        .form-control, .btn-primary, .btn-secondary, .btn-info {
+        .form-control,
+        .btn-primary,
+        .btn-secondary,
+        .btn-info {
             border-radius: 8px;
         }
+
         .form-control {
             box-shadow: inset 0px 4px 8px rgba(0, 0, 0, 0.1);
             font-size: 1.1rem;
         }
+
         /* Button styling */
-        .btn-primary, .btn-secondary, .btn-info {
+        .btn-primary,
+        .btn-secondary,
+        .btn-info {
             font-size: 0.9rem;
             flex: 1;
             margin: 0 5px;
             white-space: nowrap;
         }
+
         .btn-primary {
             background-color: #007bff;
             border: none;
             transition: all 0.3s ease;
             box-shadow: 0px 4px 8px rgba(0, 123, 255, 0.4);
         }
+
         .btn-primary:hover {
             background-color: #0056b3;
             box-shadow: 0px 6px 12px rgba(0, 123, 255, 0.6);
         }
-        .btn-secondary, .btn-info {
+
+        .btn-secondary,
+        .btn-info {
             background-color: #6c757d;
             color: white;
             transition: all 0.3s ease;
         }
-        .btn-info:hover, .btn-secondary:hover {
+
+        .btn-info:hover,
+        .btn-secondary:hover {
             background-color: #495057;
         }
+
         /* Loading spinner */
         .spinner-border {
             display: none;
@@ -74,30 +105,56 @@
             height: 1rem;
             color: green;
         }
+
         /* Link styling */
         .link {
             color: #007bff;
             text-decoration: none;
             font-weight: 500;
         }
+
         .link:hover {
             text-decoration: underline;
         }
+
+        /* Copyright Icon */
+        .copyright {
+            margin-top: auto;
+            /* Pushes the copyright to the bottom of the container */
+            font-size: 0.9rem;
+            color: #333;
+            text-align: center;
+        }
+
+        .copyright i {
+
+            color: green;
+        }
+
+        .copyright {
+            color: red;
+            margin-top: 12px;
+            /* Adjust this value to add space above */
+            min-width: auto;
+            min-height: auto;
+        }
     </style>
 </head>
+
 <body>
     <div class="container mt-5">
         <p class="description">
             <i class="fas fa-info-circle"></i>
-Released version of Argus - Web Application is the ultimate Information Gathering Toolkit Development Version By HackerTheme
+            Released version of Argus - Web Application is the ultimate Information Gathering Toolkit Development
+            Version By HackerTheme
         </p>
         <h2>
             <i class="fas fa-search"></i> Argus - Web Application
         </h2>
-        
+
         <!-- Display API Key Status -->
         <p id="apiKeyStatus" class="mt-3"></p>
-        
+
         <form action="{{ url_for('run_tool') }}" method="POST">
             <div class="form-group">
                 <label for="tool">
@@ -105,7 +162,7 @@ Released version of Argus - Web Application is the ultimate Information Gatherin
                 </label>
                 <select class="form-control" id="tool" name="tool" required>
                     {% for tool in tools %}
-                        <option value="{{ tool.number }}">{{ tool.name }}</option>
+                    <option value="{{ tool.number }}">{{ tool.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -127,12 +184,18 @@ Released version of Argus - Web Application is the ultimate Information Gatherin
                     <span class="spinner-border" id="loadingSpinner"></span>
                 </button>
             </div>
-            
+
             <p class="description mt-3">
-                If you want to use the CLI Version, You can go to <a href="https://github.com/ThemeHackers/argus/" class="link" target="_blank">This Link</a>.
+                If you want to use the CLI Version, You can go to <a href="https://github.com/ThemeHackers/argus/"
+                    class="link" target="_blank">This Link</a>.
             </p>
         </form>
         <div id="connectionStatus" class="mt-3"></div>
+
+        <!-- Copyright Icon -->
+        <div class="copyright">
+            <p>&copy; 2024 Argus Web Application. All rights reserved. <i class="fas fa-copyright"></i></p>
+        </div>
     </div>
 
     <script>
@@ -154,7 +217,7 @@ Released version of Argus - Web Application is the ultimate Information Gatherin
         }
 
         // Call the function on page load
-        window.onload = function() {
+        window.onload = function () {
             checkApiKeyStatus();
         };
 
@@ -181,4 +244,5 @@ Released version of Argus - Web Application is the ultimate Information Gatherin
         }
     </script>
 </body>
+
 </html>

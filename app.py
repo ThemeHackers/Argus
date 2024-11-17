@@ -199,4 +199,6 @@ def internal_error(error):
     return render_template('error.html', error_message="An unexpected error occurred on the server."), 500
 
 if __name__ == '__main__':
-    app.run(port=10000)
+    app.run(port=10000, debug=False)
+
+

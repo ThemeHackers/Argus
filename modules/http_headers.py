@@ -6,18 +6,16 @@ import requests
 from bs4 import BeautifulSoup
 from rich.console import Console
 from rich.table import Table
-from colorama import Fore, init
 import json
 import re
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.util import clean_domain_input, clean_url, ensure_url_format
 
-init(autoreset=True)
 console = Console()
 
 def banner():
-    console.print(Fore.GREEN + """
+    console.print("""
     =============================================
            Argus - Advanced HTTP Header Analysis
     =============================================
@@ -29,7 +27,7 @@ def get_headers(url):
         response.raise_for_status()
         return response.headers, response.text
     except requests.RequestException as e:
-        console.print(Fore.RED + f"[!] Error retrieving headers: {e}")
+        console.print(f"[!] Error retrieving headers: {e}")
         return None, None
 
 def display_headers(headers):
@@ -61,9 +59,9 @@ def analyze_security_headers(headers):
     console.print(table)
     missing = [header for header, status in security_headers.items() if status == "Not Set"]
     if missing:
-        console.print(Fore.YELLOW + f"[!] Missing Security Headers: {', '.join(missing)}")
+        console.print(f"[!] Missing Security Headers: {', '.join(missing)}")
     else:
-        console.print(Fore.GREEN + "[+] All critical security headers are properly configured.")
+        console.print("[+] All critical security headers are properly configured.")
 
 def identify_server_technology(headers):
     server = headers.get("Server", "Unknown")
@@ -76,7 +74,7 @@ def identify_server_technology(headers):
         technology = "Microsoft IIS"
     elif "cloudflare" in server.lower():
         technology = "Cloudflare CDN"
-    console.print(Fore.YELLOW + "[*] Detecting server technology...")
+    console.print("[*] Detecting server technology...")
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Server", style="cyan", justify="left")
     table.add_column("Detected Technology", style="green")
@@ -103,14 +101,14 @@ def scan_vulnerabilities(headers):
     if vulnerabilities:
         console.print(table)
     else:
-        console.print(Fore.GREEN + "[+] No vulnerabilities detected based on HTTP headers.")
+        console.print("[+] No vulnerabilities detected based on HTTP headers.")
 
 def analyze_cookies(headers):
     cookies = headers.get("Set-Cookie")
     if not cookies:
-        console.print(Fore.YELLOW + "[!] No cookies found.")
+        console.print("[!] No cookies found.")
         return
-    console.print(Fore.YELLOW + "[*] Analyzing cookies for security flags...")
+    console.print("[*] Analyzing cookies for security flags...")
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Cookie", style="cyan", justify="left")
     table.add_column("Attributes", style="green")
@@ -145,30 +143,30 @@ def detect_frameworks(response_text):
         if signature in response_text:
             detected.append(framework)
     if detected:
-        console.print(Fore.GREEN + f"[+] Detected Frameworks: {', '.join(detected)}")
+        console.print(f"[+] Detected Frameworks: {', '.join(detected)}")
     else:
-        console.print(Fore.YELLOW + "[!] No common frameworks detected.")
+        console.print("[!] No common frameworks detected.")
 
 def main(target):
     banner()
     target = clean_url(clean_domain_input(target))
-    console.print(Fore.WHITE + f"[*] Fetching HTTP headers for: {target}")
+    console.print(f"[*] Fetching HTTP headers for: {target}")
     headers, response_text = get_headers(target)
     if headers:
-        console.print(Fore.YELLOW + "[*] Displaying HTTP headers...")
+        console.print("[*] Displaying HTTP headers...")
         display_headers(headers)
-        console.print(Fore.YELLOW + "[*] Analyzing security headers...")
+        console.print("[*] Analyzing security headers...")
         analyze_security_headers(headers)
         identify_server_technology(headers)
-        console.print(Fore.YELLOW + "[*] Scanning for vulnerabilities based on headers...")
+        console.print("[*] Scanning for vulnerabilities based on headers...")
         scan_vulnerabilities(headers)
-        console.print(Fore.YELLOW + "[*] Analyzing cookies for security flags...")
+        console.print("[*] Analyzing cookies for security flags...")
         analyze_cookies(headers)
-        console.print(Fore.YELLOW + "[*] Detecting frameworks based on response content...")
+        console.print("[*] Detecting frameworks based on response content...")
         detect_frameworks(response_text)
     else:
-        console.print(Fore.RED + "[!] No headers found.")
-    console.print(Fore.WHITE + "[*] HTTP header analysis completed.")
+        console.print("[!] No headers found.")
+    console.print("[*] HTTP header analysis completed.")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -176,8 +174,8 @@ if __name__ == "__main__":
             target = sys.argv[1]
             main(target)
         except KeyboardInterrupt:
-            console.print(Fore.RED + "\n[!] Process interrupted by user.")
+            console.print("\n[!] Process interrupted by user.")
             sys.exit(1)
     else:
-        console.print(Fore.RED + "[!] No target provided. Please pass a domain or URL.")
+        console.print("[!] No target provided. Please pass a domain or URL.")
         sys.exit(1)

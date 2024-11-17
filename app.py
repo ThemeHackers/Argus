@@ -88,24 +88,6 @@ tools = [
 def index():
     return render_template('/index.html', tools=tools)
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Health Check</title>
-    </head>
-    <body>
-        <h1>Application Status: Healthy</h1>
-        <p>Status Code: 200</p>
-        <p>Timestamp: {{ timestamp }}</p>
-    </body>
-    </html>
-    """, 200
-
 @app.route('/download/<filename>')
 def download_result(filename):
     try:

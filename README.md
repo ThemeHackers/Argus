@@ -99,7 +99,7 @@ pip3 install -r requirements.txt
 Once installed, you can launch Argus with:
 
 ```bash
-python3 argus.py
+sudo python3 argus.py
 ```
 
 ---

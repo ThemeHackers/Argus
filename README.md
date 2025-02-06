@@ -89,6 +89,7 @@ To get started with Argus, follow these simple steps:
 
 ```bash
 git clone https://github.com/ThemeHackers/argus.git
+sudo su
 cd argus
 python3 -m venv .venv
 source .venv/bin/activate

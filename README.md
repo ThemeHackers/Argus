@@ -44,6 +44,12 @@ Whether you're conducting research, performing security assessments with proper 
 ## ⚠️ WARNING: LEGAL DISCLAIMER
 
 This tool is intended for **educational and ethical use only**. The author is not liable for any illegal use or misuse of this tool. Users are solely responsible for their actions and must ensure they have explicit permission to scan the target systems.
+---
+
+## 👀 Screenshots
+Take a look at Argus in action:
+
+![Argus](img/menu.png)
 
 ---
 

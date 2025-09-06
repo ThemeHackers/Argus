@@ -1,5 +1,5 @@
 ## Development Version By HackerTheme 
-## 🛠  Update Algorithm and Fixed a bug From HackerTheme 
+## 🛠  Update Algorithm and Fixed a bug From ThemeHackers 
 > Lists modules
   - argus.py
   - tls_security_config.py
